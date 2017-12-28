@@ -21,26 +21,32 @@ class crawler:
         tmp = requests.post(final)
         for anime in tmp.json()['result']['list']:
             self.data.append(anime)
-            print(str(i),' has appended!')
+            print(anime['title'],' has appended!')
     def get_more_about_anime(self):#I will use re to check the num of bilibili, the amount of play ,fans
         for anime in self.data:
             deep = anime['url']
             deeper = requests.get(deep)
-            sl = re.findall('<em>(\d+[\.]*\d*)[万]?</em>',deeper.text)
+            sl = re.findall('<em>(\d+[\.]*\d*[万]?)</em>',deeper.text)
             print(anime['url'],'has gotten more specific data!')
-            print(sl)
             if(len(sl)==3):
-                if(float(sl[2]) >1000):
-                    sll = float(sl[2])/10000
+                if"万" in sl[2]:
+                    sll = float(sl[2][:-1])*10000
                 else:
                     sll = float(sl[2])
             else:sll = 0
             anime['bilibili'] = str(sll)
             if(len(sl)==1):
                 anime['fans'] ='0'
-            elif(len(sl)>=2): anime['fans'] = sl[1]
-            anime['amount_play'] = sl[0]
-            #sleep(1)
+            elif(len(sl)>=2):
+                if '万' in sl[1]:
+                    anime['fans'] = str(float(sl[1][:-1])*10000)
+                else:
+                    anime['fans'] = sl[1]
+            if '万' in sl[0]:
+                anime['amount_play'] = str(float(sl[0][:-1])*10000)
+            else:
+                anime['amount_play'] = sl[0]
+            sleep(0.3)
     def play(self):
         r = requests.post(self.original_url+postfix)
         total = r.json()['result']['count']
@@ -64,7 +70,7 @@ class crawler:
             table.write(i,2,a['amount_play'])
             table.write(i,4,a['bilibili'])
             i +=1
-            print(' has been writen!')
+            print('%s has been writen!'%(a['title']))
         file.save("D:\\2017anime_data.xls")
 
 def main():
